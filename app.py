@@ -208,7 +208,7 @@ label { color: #a0a0b0 !important; font-size: 0.82rem !important; font-weight: 5
 # --- Hero Section ---
 st.markdown("""
 <div class="hero">
-    <h1>🧠 Stroke Risk Prediction</h1>
+    <h1>⚕️ Stroke Risk Prediction</h1>
     <p>Advanced AI-powered stroke risk assessment tool</p>
     <br>
     <span class="tag">ML Model</span>
