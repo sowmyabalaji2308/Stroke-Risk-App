@@ -72,6 +72,7 @@ elif risk_level == "Medium":
 else:
     st.error(f"High Risk — {risk_score}%")
 
+
 # --- LLM Explanation ---
 def get_llm_explanation(patient_data, risk_score, risk_level):
     prompt = f"""A patient has the following profile:
