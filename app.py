@@ -1,14 +1,12 @@
 import streamlit as st
-import anthropic
-import os
-from dotenv import load_dotenv
+from groq import Groq
 
-load_dotenv()
+client = Groq(api_key=st.secrets["GROQ_API_KEY"])
 
-client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+st.set_page_config(page_title="Stroke Risk Prediction", page_icon="🧠")
 
-st.title("Stroke Risk Prediction")
-st.subheader("AI-powered stroke risk analysis")
+st.title("🧠 Stroke Risk Prediction")
+st.subheader("AI-powered stroke risk analysis using Machine Learning + LLM")
 
 # --- Patient Input Form ---
 st.header("Patient Information")
@@ -30,7 +28,7 @@ with col2:
     smoking = st.selectbox("Smoking Status", ["Never smoked", "Formerly smoked", "Smokes", "Unknown"])
 
 # --- Risk Calculation ---
-def calculate_risk(age, hypertension, heart_disease, glucose, bmi, smoking, work_type):
+def calculate_risk(age, hypertension, heart_disease, glucose, bmi, smoking):
     score = 0
     if age > 60: score += 25
     elif age > 45: score += 15
@@ -45,25 +43,36 @@ def calculate_risk(age, hypertension, heart_disease, glucose, bmi, smoking, work
     elif smoking == "Formerly smoked": score += 5
     return min(score, 95)
 
-risk_score = calculate_risk(age, hypertension, heart_disease, glucose, bmi, smoking, work_type)
+risk_score = calculate_risk(age, hypertension, heart_disease, glucose, bmi, smoking)
 
 if risk_score < 35:
     risk_level = "Low"
-    color = "green"
 elif risk_score < 65:
     risk_level = "Medium"
-    color = "orange"
 else:
     risk_level = "High"
-    color = "red"
 
 # --- Display Risk Score ---
 st.header("Risk Result")
-st.metric("Risk Score", f"{risk_score}%")
-st.markdown(f"**Risk Level:** :{color}[{risk_level}]")
+
+col3, col4, col5 = st.columns(3)
+with col3:
+    st.metric("Risk Score", f"{risk_score}%")
+with col4:
+    st.metric("Risk Level", risk_level)
+with col5:
+    st.metric("Probability", f"{risk_score/100:.2f}")
+
 st.progress(risk_score / 100)
 
-# --- LLM Layer ---
+if risk_level == "Low":
+    st.success(f"Low Risk — {risk_score}%")
+elif risk_level == "Medium":
+    st.warning(f"Medium Risk — {risk_score}%")
+else:
+    st.error(f"High Risk — {risk_score}%")
+
+# --- LLM Explanation ---
 def get_llm_explanation(patient_data, risk_score, risk_level):
     prompt = f"""A patient has the following profile:
 - Gender: {patient_data['gender']}, Age: {patient_data['age']}
@@ -84,31 +93,35 @@ Please provide:
 
 Be clear, concise, and avoid medical jargon."""
 
-    response = client.messages.create(
-        model="claude-opus-4-5",
-        max_tokens=500,
-        messages=[{"role": "user", "content": prompt}]
+    response = client.chat.completions.create(
+        model="llama3-8b-8192",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=500
     )
-    return response.content[0].text
+    return response.choices[0].message.content
 
 # --- Analyze Button ---
 st.header("AI Explanation")
 
-if st.button("Analyze with Claude AI"):
+if st.button("🔍 Analyze with AI"):
     with st.spinner("Generating AI explanation..."):
         patient_data = {
             "gender": gender, "age": age,
-            "hypertension": hypertension, "heart_disease": heart_disease,
-            "marital_status": marital_status, "work_type": work_type,
-            "residence": residence, "glucose": glucose,
-            "bmi": bmi, "smoking": smoking
+            "hypertension": hypertension,
+            "heart_disease": heart_disease,
+            "marital_status": marital_status,
+            "work_type": work_type,
+            "residence": residence,
+            "glucose": glucose,
+            "bmi": bmi,
+            "smoking": smoking
         }
         explanation = get_llm_explanation(patient_data, risk_score, risk_level)
         st.success("Analysis Complete!")
         st.write(explanation)
 
 # --- Chat Interface ---
-st.header("Ask Claude about the Results")
+st.header("💬 Ask AI about the Results")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -117,7 +130,7 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.write(msg["content"])
 
-if user_input := st.chat_input("Ask anything about the patient's risk..."):
+if user_input := st.chat_input("Ask anything about the patient's stroke risk..."):
     st.session_state.messages.append({"role": "user", "content": user_input})
 
     with st.chat_message("user"):
@@ -127,13 +140,15 @@ if user_input := st.chat_input("Ask anything about the patient's risk..."):
 
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
-            response = client.messages.create(
-                model="claude-opus-4-5",
-                max_tokens=300,
-                system=f"You are a medical AI assistant analyzing stroke risk. Patient context: {context}. Answer concisely.",
-                messages=st.session_state.messages
+            response = client.chat.completions.create(
+                model="llama3-8b-8192",
+                messages=[
+                    {"role": "system", "content": f"You are a medical AI assistant analyzing stroke risk. Patient context: {context}. Answer concisely."},
+                    *st.session_state.messages
+                ],
+                max_tokens=300
             )
-            reply = response.content[0].text
+            reply = response.choices[0].message.content
             st.write(reply)
 
     st.session_state.messages.append({"role": "assistant", "content": reply})
