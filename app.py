@@ -94,7 +94,7 @@ Please provide:
 Be clear, concise, and avoid medical jargon."""
 
     response = client.chat.completions.create(
-        model="llama3-8b-8192",
+        model="llama-3.3-70b-versatile",
         messages=[{"role": "user", "content": prompt}],
         max_tokens=500
     )
@@ -141,7 +141,7 @@ if user_input := st.chat_input("Ask anything about the patient's stroke risk..."
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
             response = client.chat.completions.create(
-                model="llama3-8b-8192",
+                model="llama-3.3-70b-versatile",
                 messages=[
                     {"role": "system", "content": f"You are a medical AI assistant analyzing stroke risk. Patient context: {context}. Answer concisely."},
                     *st.session_state.messages
