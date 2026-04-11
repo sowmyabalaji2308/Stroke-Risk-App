@@ -3,7 +3,7 @@ from groq import Groq
 
 st.set_page_config(
     page_title="Stroke Risk Prediction",
-    
+    page_icon="⚕️"
     layout="wide"
 )
 
