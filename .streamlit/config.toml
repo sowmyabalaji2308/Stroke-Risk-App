@@ -1,4 +1,13 @@
+import streamlit as st
 
+st.markdown("""
+    <style>
+    .stApp {
+        background-color: #ffffff;
+        color: #000000;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 [theme]
 base = "light"
