@@ -1,2 +1,7 @@
 streamlit
 groq
+xgboost
+scikit-learn
+pandas
+numpy
+imbalanced-learn
